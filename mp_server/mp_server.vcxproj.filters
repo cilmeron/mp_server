@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{e110ac98-c775-45b2-a628-2087301f9398}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\client.cpp" />
+    <ClCompile Include="src\log.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\mp_server.cpp" />
+    <ClCompile Include="src\server.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\client.h" />
+    <ClInclude Include="src\log.h" />
+    <ClInclude Include="src\mp_server.h" />
+    <ClInclude Include="src\pipe_ret_t.h" />
+    <ClInclude Include="src\server.h" />
+    <ClInclude Include="src\server_observer.h" />
+  </ItemGroup>
+</Project>
