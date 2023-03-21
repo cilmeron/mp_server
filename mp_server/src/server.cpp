@@ -43,7 +43,8 @@ namespace mp_server
 				{
 					client->setErrorMessage(strerror(errno));
 				}
-				close(client->getFileDescriptor());
+				//This doesn't seem to be necessary because the handle seems to be always closed at that point
+				//close(client->getFileDescriptor());
 				publishClientDisconnected(*client);
 				deleteClient(*client);
 				break;
@@ -115,13 +116,20 @@ namespace mp_server
 		m_subscribers.reserve(1);
 		pipe_ret_t ret;
 		m_clientindex = 0;
-
+		#ifdef __linux
+		#elif _WIN32
+			WSADATA wsaData;
+			WSAStartup(MAKEWORD(2, 2), &wsaData);
+		#else
+		#endif
 		m_sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
 		if (m_sockfd == -1)
 		{
 			ret.success = false;
-			ret.msg = strerror(errno);
+ 			ret.msg = "Couldn't open socket - ";
+			ret.msg += strerror(errno);
+			ret.msg += WSAGetLastError();
 			return ret;
 		}
 

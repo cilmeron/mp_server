@@ -43,7 +43,6 @@ namespace mp_server
 		void publishClientMsg(const Client& client, const char* msg, size_t msgSize);
 		void publishClientDisconnected(const Client& client);
 		void receiveTask();
-
 	};
 }
 
