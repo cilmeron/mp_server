@@ -3,6 +3,8 @@
 #include "log.h"
 #include <thread>
 #include <chrono>
+#include <sstream>
+#include <string>
 
 namespace mp_server
 {
@@ -12,16 +14,57 @@ namespace mp_server
 	}
 	void onIncomingClient(const Client& client, const char* msg, size_t size)
 	{
-		_CORE_INFO("Client sent some message");
+		int lclid = client.getId();
+		_CORE_INFO("Client {0} sent some message", lclid);
+		char* rmsg;
+		const char s[2] = "\n";
+		rmsg = strtok(const_cast<char*>(msg), s);
+		if (rmsg[0] == 'T')
+		{
+			mp_server::processchat(rmsg, lclid);
+		}
+		else if (rmsg[0] == 'P')
+		{
+			mp_server::processping(client);
+			
+		}
+	}
+	void mp_server::processping(const Client& client)
+	{
+		std::string reply = "PONG:|";
+		const char* repl = reply.c_str();
+		m_server.sendToClient(client, repl, strlen(repl));
+	}
+	void mp_server::processchat(const char* msg, int id)
+	{
+		std::stringstream data(msg);
+		std::string l;
+		std::string name = "Player" + std::to_string(id);
+		int cc = 0;
+		while (std::getline(data, l, ':'))
+		{
+			if (cc == 0)
+			{
+
+			}
+			else
+			{
+				std::string reply;
+				reply = "T:" + name + ":" + l + ":|";
+				const char* repl = reply.c_str();
+				m_server.sendToAllClients(repl, strlen(repl));
+			}
+			cc++;
+		}
+
 	}
 	void onDisconnect(const Client& client)
 	{
-		_CORE_INFO("Client {0} disconnected. {1}", client.getIp(), client.getErrorMessage());
+		_CORE_INFO("Client {0} (ip:{1}) disconnected. {2}", client.getId(), client.getIp(), client.getErrorMessage());
 	}
 	int mp_server::m_port;
 	void mp_server::create()
 	{
-		m_port = 8080;
 		pipe_ret_t runServer = m_server.start(m_port);
 		if (runServer.success)
 		{
