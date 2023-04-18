@@ -129,7 +129,11 @@ namespace mp_server
 			ret.success = false;
  			ret.msg = "Couldn't open socket - ";
 			ret.msg += strerror(errno);
+		#ifdef __linux
+		#elif _WIN32
 			ret.msg += WSAGetLastError();
+		#else
+		#endif
 			return ret;
 		}
 

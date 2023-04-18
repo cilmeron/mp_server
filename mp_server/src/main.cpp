@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
     mp_server::Log::Init();
     _CORE_INFO("Server starting up.");
     mp_server::mp_server *server = new mp_server::mp_server();
-    server->setPort(8042);
+    server->setPort(8044);
     server->create();
     return 0;
 }

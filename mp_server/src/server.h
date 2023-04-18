@@ -7,6 +7,8 @@
 #ifdef __linux
 	#include <sys/socket.h>
 	#include <unistd.h>
+	#include <netinet/in.h>
+	#include <arpa/inet.h>
 #elif _WIN32
 	#include <WinSock2.h>
 	#include <WS2tcpip.h>

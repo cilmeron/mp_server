@@ -12,7 +12,7 @@ namespace mp_server
 
 	void Log::Init()
 	{
-		SetConsoleOutputCP(CP_UTF8);
+//		SetConsoleOutputCP(CP_UTF8);
 		spdlog::set_pattern("%^[%T] %n: %v%$");
 		s_CoreLogger = spdlog::stdout_color_mt("Server");
 		s_CoreLogger->set_level(spdlog::level::trace);
