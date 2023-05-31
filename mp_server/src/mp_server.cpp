@@ -14,22 +14,29 @@ namespace mp_server
 	}
 	void onIncomingClient(const Client& client, const char* msg, size_t size)
 	{
-		int lclid = client.getId();
-		_CORE_INFO("Client {0} sent some message: {1}", lclid, msg);
-		char* rmsg;
-		const char s[2] = "\n";
-		rmsg = strtok(const_cast<char*>(msg), s);
-		if (rmsg[0] == 'T')
+		try
 		{
-			mp_server::processchat(rmsg, lclid);
+			int lclid = client.getId();
+			_CORE_INFO("Client {0} sent some message: {1}", lclid, msg);
+			char* rmsg;
+			const char s[2] = "\n";
+			rmsg = strtok(const_cast<char*>(msg), s);
+			if (rmsg[0] == 'T')
+			{
+				mp_server::processchat(rmsg, lclid);
+			}
+			else if (rmsg[0] == 'P')
+			{
+				mp_server::processping(client);
+			}
+			else if (rmsg[0] == 'H')
+			{
+				mp_server::processhello(rmsg, lclid);
+			}
 		}
-		else if (rmsg[0] == 'P')
+		catch (...)
 		{
-			mp_server::processping(client);
-		}
-		else if (rmsg[0] == 'H')
-		{
-			mp_server::processhello(rmsg, lclid);
+			_CORE_WARN("Error_W");
 		}
 	}
 
@@ -69,12 +76,13 @@ namespace mp_server
 					number += ":|";
 					const char* repl = number.c_str();
 					m_server.sendToAllClients(repl, strlen(repl));
+					return;
 				}
 				cc++;
 			}
 			catch (...)
 			{
-				_CORE_WARN("Error");
+				_CORE_WARN("Error_H");
 			}
 		}
 	}
@@ -107,6 +115,7 @@ namespace mp_server
 				reply = "T:" + name + ":" + l + ":|";
 				const char* repl = reply.c_str();
 				m_server.sendToAllClients(repl, strlen(repl));
+				return;
 			}
 			cc++;
 			}
