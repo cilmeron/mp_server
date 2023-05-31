@@ -35,6 +35,7 @@ namespace mp_server
 
 	void mp_server::processhello(const char* msg, int id)
 	{
+		_CORE_INFO("Processing HELLO");
 		std::stringstream data(msg);
 		std::string l;
 		int cc = 0;
@@ -46,6 +47,7 @@ namespace mp_server
 			}
 			else
 			{
+				_CORE_INFO("I think the player name should be {0}", l);
 				m_server.getClient(id).setPlayerName(l);
 				std::string number = "H:"+l+":";
 				if (playerone == 0)
