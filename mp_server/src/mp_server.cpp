@@ -57,8 +57,9 @@ namespace mp_server
 				else
 				{
 					_CORE_INFO("I think the player name should be {0}", l);
-					m_server.getClient(id).setPlayerName(l);
-					_CORE_INFO("We set the playername to {0}", m_server.getClient(id).getPlayerName());
+					Client* c = m_server.getClient(id);
+					c->setPlayerName(l);
+					_CORE_INFO("We set the playername to {0}", c->getPlayerName());
 					std::string number = "H:" + l + ":";
 					if (playerone == 0)
 					{
@@ -100,7 +101,7 @@ namespace mp_server
 		std::stringstream data(msg);
 		std::string l;
 		//std::string name = "Player" + std::to_string(id);
-		std::string name = m_server.getClient(id).getPlayerName();
+		std::string name = m_server.getClient(id)->getPlayerName();
 		int cc = 0;
 		try
 		{

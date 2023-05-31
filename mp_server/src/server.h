@@ -25,7 +25,7 @@ namespace mp_server
 	public:
 		pipe_ret_t start(int port);
 		Client acceptClient(unsigned int timeout);
-		Client getClient(int id);
+		Client* getClient(int id);
 		bool deleteClient(Client& client);
 		void subscribe(const server_observer_t& observer);
 		void unsubscribeAll();
