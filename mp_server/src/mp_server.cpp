@@ -28,6 +28,45 @@ namespace mp_server
 			mp_server::processping(client);
 			
 		}
+		else if (rmsg[0] == 'H')
+		{
+			mp_server::processhello(rmsg, lclid);
+		}
+	}
+
+	void mp_server::processhello(const char* msg, int id)
+	{
+		std::stringstream data(msg);
+		std::string l;
+		int cc = 0;
+		while (std::getline(data, l, ':'))
+		{
+			if (cc == 0)
+			{
+
+			}
+			else
+			{
+				m_server.getClient(id).setPlayerName(l);
+				std::string number = "H:"+l+":";
+				if (playerone == 0)
+				{
+					playerone = id;
+					number += "A";
+				}
+				else if (playertwo == 0)
+				{
+					playertwo = id;
+					number += "B";
+				}
+				else
+				{
+					number += "G";
+				}
+				const char* repl = number.c_str();
+				m_server.sendToAllClients(repl, strlen(repl));
+			}
+		}
 	}
 	void mp_server::processping(const Client& client)
 	{
@@ -39,7 +78,8 @@ namespace mp_server
 	{
 		std::stringstream data(msg);
 		std::string l;
-		std::string name = "Player" + std::to_string(id);
+		//std::string name = "Player" + std::to_string(id);
+		std::string name = m_server.getClient(id).getPlayerName();
 		int cc = 0;
 		while (std::getline(data, l, ':'))
 		{

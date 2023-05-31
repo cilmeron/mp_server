@@ -21,10 +21,13 @@ public:
 	void setDisConnected() { m_isConnected = false; }
 	bool isConnected() { return m_isConnected; }
 	void setThreadHandler(std::function<void(void)> func) { m_threadHandler = new std::thread(func); }
+	std::string getPlayerName() const { return playername;  }
+	void setPlayerName(const std::string& name) { playername = name; }
 private:
 	int m_sockfd = 0;
 	std::string m_ip = "";
 	std::string m_errorMsg = "";
+	std::string playername = "";
 	bool m_isConnected;
 	std::thread* m_threadHandler = nullptr;
 	int m_id;
