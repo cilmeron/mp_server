@@ -38,8 +38,10 @@ namespace mp_server
 
 	int TcpServer::findPlayer(std::string playername)
 	{
+		_CORE_INFO("We are looking for playername: {0}", playername);
 		for (size_t i = 0; i < m_clients.size(); ++i)
 		{
+			_CORE_INFO("Checking against: {0}", m_clients[i].getPlayerName());
 			if (m_clients[i].getPlayerName() == playername)
 			{
 				//There is a client with this playername already - let's disconnect/drop it
