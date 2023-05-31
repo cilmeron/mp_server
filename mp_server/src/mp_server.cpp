@@ -15,7 +15,7 @@ namespace mp_server
 	void onIncomingClient(const Client& client, const char* msg, size_t size)
 	{
 		int lclid = client.getId();
-		_CORE_INFO("Client {0} sent some message", lclid);
+		_CORE_INFO("Client {0} sent some message: {1}", lclid, msg);
 		char* rmsg;
 		const char s[2] = "\n";
 		rmsg = strtok(const_cast<char*>(msg), s);
@@ -26,7 +26,6 @@ namespace mp_server
 		else if (rmsg[0] == 'P')
 		{
 			mp_server::processping(client);
-			
 		}
 	}
 	void mp_server::processping(const Client& client)
@@ -41,8 +40,12 @@ namespace mp_server
 		std::string l;
 		std::string name = "Player" + std::to_string(id);
 		int cc = 0;
+		try
+		{
 		while (std::getline(data, l, ':'))
 		{
+			try
+			{
 			if (cc == 0)
 			{
 
@@ -55,6 +58,16 @@ namespace mp_server
 				m_server.sendToAllClients(repl, strlen(repl));
 			}
 			cc++;
+			}
+			catch (...)
+			{
+				_CORE_WARN("Error");
+			}
+		}
+		}
+		catch (...)
+		{
+			_CORE_WARN("Error_O");
 		}
 
 	}
