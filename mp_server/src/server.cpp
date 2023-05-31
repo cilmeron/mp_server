@@ -1,4 +1,5 @@
 #include "server.h"
+#include "log.h"
 
 constexpr auto DEFAULT_CLIENT_RESERVE = 10;
 
@@ -42,7 +43,9 @@ namespace mp_server
 			if (m_clients[i].getPlayerName() == playername)
 			{
 				//There is a client with this playername already - let's disconnect/drop it
+				
 				int pid = m_clients[i].getPlayerKind();
+				_CORE_INFO("We found an existing clientid: {0}", pid);
 				deleteClient(m_clients[i]);
 				return pid;
 			}

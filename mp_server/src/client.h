@@ -3,6 +3,7 @@
 #include <string>
 #include <functional>
 #include <thread>
+#include "log.h"
 
 class Client 
 {
@@ -24,7 +25,7 @@ public:
 	std::string getPlayerName() const { return playername;  }
 	void setPlayerName(const std::string& name) { playername = name; }
 	int getPlayerKind() { return playerkind; }
-	void setPlayerKind(const int kind) { playerkind = kind; }
+	void setPlayerKind(const int kind) { playerkind = kind; _CORE_INFO("Setting playerkind to {0}", kind); }
 private:
 	int m_sockfd = 0;
 	std::string m_ip = "";
