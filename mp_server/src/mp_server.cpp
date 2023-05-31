@@ -116,6 +116,8 @@ namespace mp_server
 			return;
 		}
 		//register observer/listener
+		playerone = 0;
+		playertwo = 0;
 		observer_administration.incoming_packet_func = onIncomingAdmin;
 		observer_clients.incoming_packet_func = onIncomingClient;
 		observer_administration.disconnected_func = onDisconnect;

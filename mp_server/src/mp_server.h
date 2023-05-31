@@ -16,7 +16,7 @@ namespace mp_server
 		inline static TcpServer m_server;
 		static int m_port;
 		server_observer_t observer_clients, observer_administration;
-		static int playerone = 0;
-		static int playertwo = 0;
+		static int playerone;
+		static int playertwo;
 	};
 }
