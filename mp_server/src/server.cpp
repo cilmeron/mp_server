@@ -24,6 +24,17 @@ namespace mp_server
 		}
 	}
 
+	Client TcpServer::getClient(int id)
+	{
+		for (size_t i = 0; i < m_clients.size(); ++i)
+		{
+			if (m_clients[i].getId() == id)
+			{
+				return m_clients[i];
+			}
+		}
+	}
+
 	void TcpServer::receiveTask()
 	{
 		Client* client = &m_clients.back();

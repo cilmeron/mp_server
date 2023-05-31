@@ -10,10 +10,13 @@ namespace mp_server
 		void create();
 		static void setPort(int port) { m_port = port;};
 		static void processchat(const char* msg, int id);
+		static void processhello(const char* msg, int id);
 		static void processping(const Client& client);
 	private:
 		inline static TcpServer m_server;
 		static int m_port;
 		server_observer_t observer_clients, observer_administration;
+		static int playerone = 0;
+		static int playertwo = 0;
 	};
 }
