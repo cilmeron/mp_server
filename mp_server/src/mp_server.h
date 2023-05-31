@@ -10,7 +10,7 @@ namespace mp_server
 		void create();
 		static void setPort(int port) { m_port = port;};
 		static void processchat(const char* msg, int id);
-		static void processhello(const char* msg, int id);
+		static void processhello(const char* msg, int id, const Client& client);
 		static void processping(const Client& client);
 	private:
 		inline static TcpServer m_server;
@@ -18,5 +18,7 @@ namespace mp_server
 		server_observer_t observer_clients, observer_administration;
 		static int playerone;
 		static int playertwo;
+		static std::string playeronestring;
+		static std::string playertwostring;
 	};
 }

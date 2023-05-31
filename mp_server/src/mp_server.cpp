@@ -31,7 +31,7 @@ namespace mp_server
 			}
 			else if (rmsg[0] == 'H')
 			{
-				mp_server::processhello(rmsg, lclid);
+				mp_server::processhello(rmsg, lclid, client);
 			}
 		}
 		catch (...)
@@ -40,7 +40,7 @@ namespace mp_server
 		}
 	}
 
-	void mp_server::processhello(const char* msg, int id)
+	void mp_server::processhello(const char* msg, int id, const Client& client)
 	{
 		_CORE_INFO("Processing HELLO");
 		std::stringstream data(msg);
@@ -56,13 +56,14 @@ namespace mp_server
 				}
 				else
 				{
+					bool reconnect = false;
+					std::string pkinds = "";
 					int playerkind = m_server.findPlayer(l);
 					if (playerkind != 4)
 					{
 						_CORE_INFO("Player has reconnected and old connection has been dropped, updating info");
 						Client* c = m_server.getClient(id);
 						c->setPlayerKind(playerkind);
-						std::string pkinds = "";
 						if (playerkind == 1)
 						{
 							playerone = id;
@@ -77,10 +78,30 @@ namespace mp_server
 						{
 							pkinds = "G";
 						}
+						reconnect = true;
+					}
+					else
+					{
+						//No old connections but that doesn't mean that we don't have a reconnection let's check against string save
+						if (playeronestring == l)
+						{
+							playerone = id;
+							pkinds = "A";
+							reconnect = true;
+						}
+						else if (playertwostring == l)
+						{
+							playertwo = id;
+							pkinds = "B";
+							reconnect = true;
+						}
+					}
+					if (reconnect == true)
+					{
 						//No need to send updated playerinfo to everyone but we have to tell this player who he is
 						std::string pinfo = "H:" + l + ":" + pkinds + ":|";
 						const char* reply = pinfo.c_str();
-						m_server.sendToClient(*c, reply, strlen(reply));
+						m_server.sendToClient(client, reply, strlen(reply));
 						return;
 					}
 					_CORE_INFO("I think the player name is {0}", l);
@@ -92,12 +113,14 @@ namespace mp_server
 					{
 						playerone = id;
 						c->setPlayerKind(1);
+						playeronestring = l;
 						number += "A";
 					}
 					else if (playertwo == 0)
 					{
 						playertwo = id;
 						c->setPlayerKind(2);
+						playertwostring = l;
 						number += "B";
 					}
 					else
