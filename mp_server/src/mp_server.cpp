@@ -39,6 +39,8 @@ namespace mp_server
 			_CORE_WARN("Error_W");
 		}
 	}
+	std::string mp_server::playeronestring;
+	std::string mp_server::playertwostring;
 
 	void mp_server::processhello(const char* msg, int id, const Client& client)
 	{
