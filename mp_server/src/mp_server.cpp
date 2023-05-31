@@ -41,31 +41,40 @@ namespace mp_server
 		int cc = 0;
 		while (std::getline(data, l, ':'))
 		{
-			if (cc == 0)
+			try
 			{
+				if (cc == 0)
+				{
 
-			}
-			else
-			{
-				_CORE_INFO("I think the player name should be {0}", l);
-				m_server.getClient(id).setPlayerName(l);
-				std::string number = "H:"+l+":";
-				if (playerone == 0)
-				{
-					playerone = id;
-					number += "A";
-				}
-				else if (playertwo == 0)
-				{
-					playertwo = id;
-					number += "B";
 				}
 				else
 				{
-					number += "G";
+					_CORE_INFO("I think the player name should be {0}", l);
+					m_server.getClient(id).setPlayerName(l);
+					std::string number = "H:" + l + ":";
+					if (playerone == 0)
+					{
+						playerone = id;
+						number += "A";
+					}
+					else if (playertwo == 0)
+					{
+						playertwo = id;
+						number += "B";
+					}
+					else
+					{
+						number += "G";
+					}
+					number += ":|";
+					const char* repl = number.c_str();
+					m_server.sendToAllClients(repl, strlen(repl));
 				}
-				const char* repl = number.c_str();
-				m_server.sendToAllClients(repl, strlen(repl));
+				cc++;
+			}
+			catch (...)
+			{
+				_CORE_WARN("Error");
 			}
 		}
 	}
