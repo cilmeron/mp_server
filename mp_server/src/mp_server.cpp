@@ -116,6 +116,9 @@ namespace mp_server
 		_CORE_INFO("Client {0} (ip:{1}) disconnected. {2}", client.getId(), client.getIp(), client.getErrorMessage());
 	}
 	int mp_server::m_port;
+	int mp_server::playerone;
+	int mp_server::playertwo;
+
 	void mp_server::create()
 	{
 		pipe_ret_t runServer = m_server.start(m_port);
