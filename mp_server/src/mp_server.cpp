@@ -88,12 +88,14 @@ namespace mp_server
 	}
 	void mp_server::processping(const Client& client)
 	{
+		_CORE_INFO("Processing PING");
 		std::string reply = "PONG:|";
 		const char* repl = reply.c_str();
 		m_server.sendToClient(client, repl, strlen(repl));
 	}
 	void mp_server::processchat(const char* msg, int id)
 	{
+		_CORE_INFO("Processing Chat");
 		std::stringstream data(msg);
 		std::string l;
 		//std::string name = "Player" + std::to_string(id);
