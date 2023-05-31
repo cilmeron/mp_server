@@ -56,10 +56,27 @@ namespace mp_server
 				}
 				else
 				{
-					_CORE_INFO("I think the player name should be {0}", l);
+					int playerkind = m_server.findPlayer(l);
+					if (playerkind != 4)
+					{
+						_CORE_INFO("Player has reconnected and old connection has been dropped, updating info");
+						Client* c = m_server.getClient(id);
+						c->setPlayerKind(playerkind);
+						if (playerkind == 1)
+						{
+							playerone = id;
+						}
+						else if (playerkind == 2)
+						{
+							playertwo = id;
+						}
+						//No need to send updated playerinfo to anyone
+						return;
+					}
+					_CORE_INFO("I think the player name is {0}", l);
 					Client* c = m_server.getClient(id);
 					c->setPlayerName(l);
-					_CORE_INFO("We set the playername to {0}", c->getPlayerName());
+					_CORE_INFO("We set the client playername to {0}", c->getPlayerName());
 					std::string number = "H:" + l + ":";
 					if (playerone == 0)
 					{

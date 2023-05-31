@@ -23,11 +23,14 @@ public:
 	void setThreadHandler(std::function<void(void)> func) { m_threadHandler = new std::thread(func); }
 	std::string getPlayerName() const { return playername;  }
 	void setPlayerName(const std::string& name) { playername = name; }
+	int getPlayerKind() { return playerkind; }
+	void setPlayerKind(const int kind) { playerkind = kind; }
 private:
 	int m_sockfd = 0;
 	std::string m_ip = "";
 	std::string m_errorMsg = "";
 	std::string playername = "";
+	int playerkind = 4;
 	bool m_isConnected;
 	std::thread* m_threadHandler = nullptr;
 	int m_id;

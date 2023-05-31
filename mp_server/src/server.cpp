@@ -35,6 +35,21 @@ namespace mp_server
 		}
 	}
 
+	int TcpServer::findPlayer(std::string playername)
+	{
+		for (size_t i = 0; i < m_clients.size(); ++i)
+		{
+			if (m_clients[i].getPlayerName() == playername)
+			{
+				//There is a client with this playername already - let's disconnect/drop it
+				int pid = m_clients[i].getPlayerKind();
+				deleteClient(m_clients[i]);
+				return pid;
+			}
+		}
+		return 4;
+	}
+
 	void TcpServer::receiveTask()
 	{
 		Client* client = &m_clients.back();

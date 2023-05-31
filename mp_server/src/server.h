@@ -26,6 +26,7 @@ namespace mp_server
 		pipe_ret_t start(int port);
 		Client acceptClient(unsigned int timeout);
 		Client* getClient(int id);
+		int findPlayer(std::string playername);
 		bool deleteClient(Client& client);
 		void subscribe(const server_observer_t& observer);
 		void unsubscribeAll();
