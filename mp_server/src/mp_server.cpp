@@ -8,41 +8,105 @@
 
 namespace mp_server
 {
+	std::string createString(const char* data, size_t size)
+	{
+		return std::string(data, size);
+	}
 	void onIncomingAdmin(const Client& client, const char* msg, size_t size)
 	{
 		_CORE_INFO("Administrator sent some message");
 	}
 	void onIncomingClient(const Client& client, const char* msg, size_t size)
-	{
-		try
+	{		
+		std::string message = createString(msg, size);
+		int lclid = client.getId();
+		_CORE_INFO("Client {0} sent some message: {1}", lclid, message);
+		const std::string delimiters = "\n\0";
+		std::istringstream iss(message);
+		std::string token;
+		while (std::getline(iss, token, delimiters.front()))
 		{
-			int lclid = client.getId();
-			_CORE_INFO("Client {0} sent some message: {1}", lclid, msg);
-			char* rmsg;
-			const char s[2] = "\n";
-			rmsg = strtok(const_cast<char*>(msg), s);
-			if (rmsg[0] == 'T')
+			if (!token.empty())
 			{
-				mp_server::processchat(rmsg, lclid);
+				if (token.length() == 1 || token[1] != ':')
+				{
+					_CORE_INFO("This is probably a garbage message because it doesn't contain valid marker");
+					return;
+				}
+				if (token[0] == 'T')
+				{
+					mp_server::processchat(token, lclid);
+				}
+				else if (token[0] == 'P')
+				{
+					mp_server::processping(client);
+				}
+				else if (token[0] == 'H')
+				{
+					mp_server::processhello(token, lclid, client);
+				}
+				else if (token[0] == 'M')
+				{
+					mp_server::processmove(token, lclid, client);
+				}
 			}
-			else if (rmsg[0] == 'P')
-			{
-				mp_server::processping(client);
-			}
-			else if (rmsg[0] == 'H')
-			{
-				mp_server::processhello(rmsg, lclid, client);
-			}
-		}
-		catch (...)
-		{
-			_CORE_WARN("Error_W");
 		}
 	}
 	std::string mp_server::playeronestring;
 	std::string mp_server::playertwostring;
+	std::string processSingleMoveCommand(const std::string& command)
+	{
+		std::istringstream commandStream(command);
+		std::string token;
 
-	void mp_server::processhello(const char* msg, int id, const Client& client)
+		std::vector<std::string> components;
+		while (std::getline(commandStream, token, ':'))
+		{
+			components.push_back(token);
+		}
+
+		// Assuming the components vector has the expected number of elements
+		if (components.size() == 4)
+		{
+			std::string playerName = components[1];
+			std::string coordinates = components[2];
+			std::string UnitID = components[3];
+			return "M:"+playerName+":"+coordinates + ":" + UnitID + ":|";
+		}
+		return "";
+	}
+
+	void mp_server::processmove(std::string msg, int id, const Client& client)
+	{
+		_CORE_INFO("Processing MOVE command");
+
+		std::istringstream messageStream(msg);
+		std::string delim = "M:";
+		size_t pos = 0;
+		std::string token;
+		while ((pos = msg.find(delim)) != std::string::npos)
+		{
+			token = msg.substr(0, pos);
+			msg.erase(0, pos + delim.length());
+			std::string send = processSingleMoveCommand("M:" + token);
+			if (send.length() > 1)
+			{
+				_CORE_INFO("SENDING: " + send);
+				m_server.sendToAllClients(send.c_str(), send.length());
+			}
+		}
+
+		std::string send = processSingleMoveCommand("M:" + msg);
+		if (send.length() > 1)
+		{
+			_CORE_INFO("SENDING: " + send);
+			m_server.sendToAllClients(send.c_str(), send.length());
+		}
+		
+	}
+
+	
+	void mp_server::processhello(std::string msg, int id, const Client& client)
 	{
 		_CORE_INFO("Processing HELLO");
 		std::stringstream data(msg);
@@ -103,6 +167,7 @@ namespace mp_server
 						//No need to send updated playerinfo to everyone but we have to tell this player who he is
 						std::string pinfo = "H:" + l + ":" + pkinds + ":|";
 						const char* reply = pinfo.c_str();
+						_CORE_INFO("Sending playeringo to reconnected player {0}", pinfo.c_str());
 						m_server.sendToClient(client, reply, strlen(reply));
 						return;
 					}
@@ -150,7 +215,7 @@ namespace mp_server
 		const char* repl = reply.c_str();
 		m_server.sendToClient(client, repl, strlen(repl));
 	}
-	void mp_server::processchat(const char* msg, int id)
+	void mp_server::processchat(std::string msg, int id)
 	{
 		_CORE_INFO("Processing Chat");
 		std::stringstream data(msg);
@@ -173,6 +238,7 @@ namespace mp_server
 				_CORE_INFO("Prepping reply");
 				std::string reply;
 				reply = "T:" + name + ":" + l + ":|";
+				_CORE_INFO(reply);
 				const char* repl = reply.c_str();
 				m_server.sendToAllClients(repl, strlen(repl));
 				return;

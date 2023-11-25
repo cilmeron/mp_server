@@ -9,8 +9,9 @@ namespace mp_server
 	public:
 		void create();
 		static void setPort(int port) { m_port = port;};
-		static void processchat(const char* msg, int id);
-		static void processhello(const char* msg, int id, const Client& client);
+		static void processchat(std::string msg, int id);
+		static void processhello(std::string msg, int id, const Client& client);
+		static void processmove(std::string msg, int id, const Client& client);
 		static void processping(const Client& client);
 	private:
 		inline static TcpServer m_server;
