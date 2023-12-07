@@ -34,6 +34,7 @@ namespace mp_server
 				return &m_clients[i];
 			}
 		}
+		return nullptr;
 	}
 
 	int TcpServer::findPlayer(std::string playername)
@@ -110,6 +111,14 @@ namespace mp_server
 			return true;
 		}
 		return false;
+	}
+
+	void TcpServer::deleteAllClients()
+	{
+		for (size_t i = 0; i < m_clients.size(); ++i)
+		{
+			m_clients.erase(m_clients.begin() + i);
+		}
 	}
 
 	void TcpServer::publishClientMsg(const Client& client, const char* msg, size_t msgSize)

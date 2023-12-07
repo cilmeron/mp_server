@@ -1,13 +1,15 @@
-#pragma once
 #include "mp_server.h"
 #include "log.h"
 #include <thread>
 #include <chrono>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 
 namespace mp_server
 {
+	
+
 	std::string createString(const char* data, size_t size)
 	{
 		return std::string(data, size);
@@ -47,16 +49,52 @@ namespace mp_server
 				}
 				else if (token[0] == 'M')
 				{
-					mp_server::processmove(token, lclid, client);
+					mp_server::processmove(token, lclid, client, "M");
+				}
+				else if (token[0] == 'C')
+				{
+					mp_server::processmove(token, lclid, client, "C");
+				}
+				else if (token[0] == 'K')
+				{
+					mp_server::processmove(token, lclid, client, "K");
+				}
+				else if (token[0] == 'Q')
+				{
+					mp_server::reset();
 				}
 			}
 		}
 	}
-	std::string mp_server::playeronestring;
-	std::string mp_server::playertwostring;
-	std::string processSingleMoveCommand(const std::string& command)
+
+	void mp_server::reset()
 	{
-		std::istringstream commandStream(command);
+		std::lock_guard<std::mutex> lock(m_server.resetMutex);
+		_CORE_INFO("Resetting server because a player quit the game.");
+		m_server.playeronestring = "";
+		m_server.playertwostring = "";
+		m_server.playeroneunits.clear();
+		m_server.playertwounits.clear();
+		m_server.playerone = -1;
+		m_server.playertwo = -1;
+		std::string send = "Q:SUCCESS:|";
+		m_server.sendToAllClients(send.c_str(), send.length());		
+		_CORE_INFO("Reset done.");
+	}
+	
+	std::string mp_server::processSingleMoveCommand(const std::string& command, const std::string& term)
+	{
+		std::string temp = "";
+		if (!command.empty() && command[0] == term[0] && command.size() > 1 && command[1] != ':')
+		{
+			temp = term + ":" + command;
+		}
+		else
+		{
+			temp = command;
+		}
+		
+		std::istringstream commandStream(temp);	
 		std::string token;
 
 		std::vector<std::string> components;
@@ -71,24 +109,56 @@ namespace mp_server
 			std::string playerName = components[1];
 			std::string coordinates = components[2];
 			std::string UnitID = components[3];
-			return "M:"+playerName+":"+coordinates + ":" + UnitID + ":|";
+			int id = std::stoi(UnitID);
+			std::unordered_map<int, std::string>& temp = (playerName == m_server.playeronestring) ? m_server.playeroneunits : m_server.playertwounits;
+			auto it = temp.find(id);
+			if (it != temp.end())
+			{
+				if (term._Equal("K"))
+				{
+					temp.erase(id);
+				}
+				else if (term._Equal("M"))
+				{
+					temp.erase(id);
+					temp.insert(std::make_pair(id, coordinates));
+				}
+				return term + ":" + playerName + ":" + coordinates + ":" + UnitID + ":|";
+			}
+			else
+			{
+				if (term._Equal("C"))
+				{
+					try
+					{
+						auto result = temp.insert(std::make_pair(id, coordinates));
+					}
+					catch (const std::exception& e)
+					{
+						// Handle the exception (log, print, etc.)
+						_CORE_ERROR("Something went wrong: {0}", e.what());
+					}
+					return term + ":" + playerName + ":" + coordinates + ":" + UnitID + ":|";
+				}
+				return term + ":NOTFOUND";
+			}
 		}
 		return "";
 	}
 
-	void mp_server::processmove(std::string msg, int id, const Client& client)
+
+	void mp_server::processmove(std::string msg, int id, const Client& client, const std::string& delim)
 	{
-		_CORE_INFO("Processing MOVE command");
+		_CORE_INFO("Processing "+delim+" command");
 
 		std::istringstream messageStream(msg);
-		std::string delim = "M:";
 		size_t pos = 0;
 		std::string token;
 		while ((pos = msg.find(delim)) != std::string::npos)
 		{
 			token = msg.substr(0, pos);
 			msg.erase(0, pos + delim.length());
-			std::string send = processSingleMoveCommand("M:" + token);
+			std::string send = processSingleMoveCommand(delim + token, delim);
 			if (send.length() > 1)
 			{
 				_CORE_INFO("SENDING: " + send);
@@ -96,7 +166,7 @@ namespace mp_server
 			}
 		}
 
-		std::string send = processSingleMoveCommand("M:" + msg);
+		std::string send = processSingleMoveCommand(delim + msg, delim);
 		if (send.length() > 1)
 		{
 			_CORE_INFO("SENDING: " + send);
@@ -124,70 +194,63 @@ namespace mp_server
 				{
 					bool reconnect = false;
 					std::string pkinds = "";
-					int playerkind = m_server.findPlayer(l);
-					if (playerkind != 4)
+					m_server.findPlayer(l); //Clean up old existing connections if any
+					if (m_server.playeronestring == l)
 					{
-						_CORE_INFO("Player has reconnected and old connection has been dropped, updating info");
-						Client* c = m_server.getClient(id);
-						c->setPlayerKind(playerkind);
-						if (playerkind == 1)
-						{
-							playerone = id;
-							pkinds = "A";
-						}
-						else if (playerkind == 2)
-						{
-							playertwo = id;
-							pkinds = "B";
-						}
-						else
-						{
-							pkinds = "G";
-						}
+						m_server.playerone = id;
+						pkinds = "A";
 						reconnect = true;
 					}
-					else
+					else if (m_server.playertwostring == l)
 					{
-						//No old connections but that doesn't mean that we don't have a reconnection let's check against string save
-						if (playeronestring == l)
-						{
-							playerone = id;
-							pkinds = "A";
-							reconnect = true;
-						}
-						else if (playertwostring == l)
-						{
-							playertwo = id;
-							pkinds = "B";
-							reconnect = true;
-						}
+						m_server.playertwo = id;
+						pkinds = "B";
+						reconnect = true;
 					}
+					
 					if (reconnect == true)
 					{
 						//No need to send updated playerinfo to everyone but we have to tell this player who he is
-						std::string pinfo = "H:" + l + ":" + pkinds + ":|";
+						std::string pinfo = "H:" + l + ":" + pkinds + ":R|";
 						const char* reply = pinfo.c_str();
-						_CORE_INFO("Sending playeringo to reconnected player {0}", pinfo.c_str());
+						_CORE_INFO("Sending playerinfo to reconnected player {0}", pinfo.c_str());
 						m_server.sendToClient(client, reply, strlen(reply));
+						std::this_thread::sleep_for(std::chrono::milliseconds(10));
+						//Now we send unit infos
+						for (const auto& entry : m_server.playeroneunits)
+						{
+							const auto& key = entry.first;
+							const auto& value = entry.second;
+							std::string send = "C:" + m_server.playeronestring + ":" + entry.second + ":" + std::to_string(entry.first) + ":|";
+							m_server.sendToClient(client, send.c_str(), send.length());
+						}
+						for (const auto& entry : m_server.playertwounits)
+						{
+							const auto& key = entry.first;
+							const auto& value = entry.second;
+							std::string send = "C:" + m_server.playertwostring + ":" + entry.second + ":" + std::to_string(entry.first) + ":|";
+							m_server.sendToClient(client, send.c_str(), send.length());
+						}
 						return;
 					}
+					
 					_CORE_INFO("I think the player name is {0}", l);
 					Client* c = m_server.getClient(id);
 					c->setPlayerName(l);
 					_CORE_INFO("We set the client playername to {0}", c->getPlayerName());
 					std::string number = "H:" + l + ":";
-					if (playerone == 0)
+					if (m_server.playerone == -1)
 					{
-						playerone = id;
+						m_server.playerone = id;
 						c->setPlayerKind(1);
-						playeronestring = l;
+						m_server.playeronestring = l;
 						number += "A";
 					}
-					else if (playertwo == 0)
+					else if (m_server.playertwo == -1)
 					{
-						playertwo = id;
+						m_server.playertwo = id;
 						c->setPlayerKind(2);
-						playertwostring = l;
+						m_server.playertwostring = l;
 						number += "B";
 					}
 					else
@@ -198,6 +261,22 @@ namespace mp_server
 					number += ":|";
 					const char* repl = number.c_str();
 					m_server.sendToAllClients(repl, strlen(repl));
+					//Now we send unit infos
+					std::this_thread::sleep_for(std::chrono::milliseconds(10));
+					for (const auto& entry : m_server.playeroneunits)
+					{
+						const auto& key = entry.first;
+						const auto& value = entry.second;
+						std::string send = "C:" + m_server.playeronestring + ":" + entry.second + ":" + std::to_string(entry.first) + ":|";
+						m_server.sendToClient(client, send.c_str(), send.length());
+					}
+					for (const auto& entry : m_server.playertwounits)
+					{
+						const auto& key = entry.first;
+						const auto& value = entry.second;
+						std::string send = "C:" + m_server.playertwostring + ":" + entry.second + ":" + std::to_string(entry.first) + ":|";
+						m_server.sendToClient(client, send.c_str(), send.length());
+					}
 					return;
 				}
 				cc++;
@@ -229,7 +308,7 @@ namespace mp_server
 		{
 			try
 			{
-			if (cc == 0)
+			if (cc == 0 || cc == 1)
 			{
 
 			}
@@ -260,14 +339,12 @@ namespace mp_server
 	void onDisconnect(const Client& client)
 	{
 		_CORE_INFO("Client {0} (ip:{1}) disconnected. {2}", client.getId(), client.getIp(), client.getErrorMessage());
+
 	}
-	int mp_server::m_port;
-	int mp_server::playerone;
-	int mp_server::playertwo;
 
 	void mp_server::create()
 	{
-		pipe_ret_t runServer = m_server.start(m_port);
+		pipe_ret_t runServer = m_server.start(m_server.m_port);
 		if (runServer.success)
 		{
 			_CORE_INFO("Server setup successful");
@@ -278,8 +355,10 @@ namespace mp_server
 			return;
 		}
 		//register observer/listener
-		playerone = 0;
-		playertwo = 0;
+		m_server.playerone = -1;
+		m_server.playertwo = -1;
+		m_server.playeroneunits = std::unordered_map<int, std::string>();
+		m_server.playertwounits = std::unordered_map<int, std::string>();
 		observer_administration.incoming_packet_func = onIncomingAdmin;
 		observer_clients.incoming_packet_func = onIncomingClient;
 		observer_administration.disconnected_func = onDisconnect;

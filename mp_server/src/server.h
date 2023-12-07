@@ -28,6 +28,7 @@ namespace mp_server
 		Client* getClient(int id);
 		int findPlayer(std::string playername);
 		bool deleteClient(Client& client);
+		void deleteAllClients();
 		void subscribe(const server_observer_t& observer);
 		void unsubscribeAll();
 		void DisconnectClient(const Client& client);
@@ -35,6 +36,14 @@ namespace mp_server
 		pipe_ret_t sendToClient(const Client & client, const char* msg, size_t size);
 		pipe_ret_t finish();
 		void printClients();
+		std::string playeronestring;
+		std::string playertwostring;
+		std::unordered_map<int, std::string> playeroneunits;
+		std::unordered_map<int, std::string> playertwounits;
+		int m_port;
+		int playerone;
+		int playertwo;
+		std::mutex resetMutex;
 	private:
 		int m_clientindex;
 		int m_sockfd;

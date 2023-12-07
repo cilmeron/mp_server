@@ -1,6 +1,6 @@
 #pragma once
-#include "server.h";
-#include "client.h";
+#include "server.h"
+#include "client.h"
 
 namespace mp_server
 {
@@ -8,18 +8,15 @@ namespace mp_server
 	{
 	public:
 		void create();
-		static void setPort(int port) { m_port = port;};
+		void setPort(int port) { m_server.m_port = port;};
 		static void processchat(std::string msg, int id);
 		static void processhello(std::string msg, int id, const Client& client);
-		static void processmove(std::string msg, int id, const Client& client);
+		static void processmove(std::string msg, int id, const Client& client, const std::string& delim);
+		static std::string processSingleMoveCommand(const std::string& command, const std::string& term);
 		static void processping(const Client& client);
+		static void reset();
 	private:
 		inline static TcpServer m_server;
-		static int m_port;
 		server_observer_t observer_clients, observer_administration;
-		static int playerone;
-		static int playertwo;
-		static std::string playeronestring;
-		static std::string playertwostring;
 	};
 }
