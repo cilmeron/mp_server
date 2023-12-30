@@ -11,8 +11,10 @@ namespace mp_server
 		void setPort(int port) { m_server.m_port = port;};
 		static void processchat(std::string msg, int id);
 		static void processhello(std::string msg, int id, const Client& client);
+		static void processattack(std::string msg, int id, const Client& client);
 		static void processmove(std::string msg, int id, const Client& client, const std::string& delim);
 		static std::string processSingleMoveCommand(const std::string& command, const std::string& term);
+		static std::string processSingleAttackCommand(const std::string& command, const std::string& term);
 		static void processping(const Client& client);
 		static void reset();
 	private:

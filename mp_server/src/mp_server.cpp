@@ -51,6 +51,10 @@ namespace mp_server
 				{
 					mp_server::processmove(token, lclid, client, "M");
 				}
+				else if (token[0] == 'A')
+				{
+					mp_server::processattack(token, lclid, client);
+				}
 				else if (token[0] == 'C')
 				{
 					mp_server::processmove(token, lclid, client, "C");
@@ -117,6 +121,13 @@ namespace mp_server
 				if (term._Equal("K"))
 				{
 					temp.erase(id);
+					if (temp.size() == 0)
+					{
+						//player has no more units - declare game over
+						_CORE_INFO("#################");
+						_CORE_INFO("Player {0} is DEAD", playerName);
+						return "G:" + playerName + ":0:|";
+					}
 				}
 				else if (term._Equal("M"))
 				{
@@ -146,6 +157,37 @@ namespace mp_server
 		return "";
 	}
 
+	std::string mp_server::processSingleAttackCommand(const std::string& command, const std::string& term)
+	{
+		std::string temp = "";
+		if (!command.empty() && command[0] == term[0] && command.size() > 1 && command[1] != ':')
+		{
+			temp = term + ":" + command;
+		}
+		else
+		{
+			temp = command;
+		}
+
+		std::istringstream commandStream(temp);
+		std::string token;
+
+		std::vector<std::string> components;
+		while (std::getline(commandStream, token, ':'))
+		{
+			components.push_back(token);
+		}
+
+		// Assuming the components vector has the expected number of elements
+		if (components.size() == 4)
+		{
+			std::string playerName = components[1];
+			std::string Victim = components[2];
+			std::string Attacker = components[3];
+			return term + ":" + playerName + ":" + Victim + ":" + Attacker + ":|";
+		}
+		return "";
+	}
 
 	void mp_server::processmove(std::string msg, int id, const Client& client, const std::string& delim)
 	{
@@ -175,6 +217,33 @@ namespace mp_server
 		
 	}
 
+	void mp_server::processattack(std::string msg, int id, const Client& client)
+	{
+		_CORE_INFO("Processing Attack command");
+
+		std::istringstream messageStream(msg);
+		size_t pos = 0;
+		const std::string delim = "A";
+		std::string token;
+		while ((pos = msg.find(delim)) != std::string::npos)
+		{
+			token = msg.substr(0, pos);
+			msg.erase(0, pos + delim.length());
+			std::string send = processSingleAttackCommand(delim + token, delim);
+			if (send.length() > 1)
+			{
+				_CORE_INFO("SENDING: " + send);
+				m_server.sendToAllClients(send.c_str(), send.length());
+			}
+		}
+
+		std::string send = processSingleAttackCommand(delim + msg, delim);
+		if (send.length() > 1)
+		{
+			_CORE_INFO("SENDING: " + send);
+			m_server.sendToAllClients(send.c_str(), send.length());
+		}
+	}
 	
 	void mp_server::processhello(std::string msg, int id, const Client& client)
 	{
