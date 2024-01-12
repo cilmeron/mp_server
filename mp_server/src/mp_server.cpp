@@ -275,8 +275,9 @@ namespace mp_server
 						m_server.sendToAllClients(gameover.c_str(), gameover.length());
 					}
 					std::string returndeath = "K:" + playerName + ":O:" + UID + ":|";
+					_CORE_INFO("Sending K for {0} (UID{1})", playerName, UID);
 					m_server.sendToAllClients(returndeath.c_str(), returndeath.length());
-					}
+				}
 			}
 			return term + ":" + playerName + ":" + UID + ":" + std::to_string(res) + ":|";
 		}
@@ -329,7 +330,7 @@ namespace mp_server
 			std::string send = processSingleMoveCommand(delim + token, delim);
 			if (send.length() > 1)
 			{
-				_CORE_INFO("SENDING: " + send);
+			//	_CORE_INFO("SENDING: " + send);
 				m_server.sendToAllClients(send.c_str(), send.length());
 			}
 		}
@@ -337,7 +338,7 @@ namespace mp_server
 		std::string send = processSingleMoveCommand(delim + msg, delim);
 		if (send.length() > 1)
 		{
-			_CORE_INFO("SENDING: " + send);
+		//	_CORE_INFO("SENDING: " + send);
 			m_server.sendToAllClients(send.c_str(), send.length());
 		}
 		
@@ -384,7 +385,7 @@ namespace mp_server
 			std::string send = processSingleAttackCommand(delim + token, delim);
 			if (send.length() > 1)
 			{
-				_CORE_INFO("SENDING: " + send);
+			//	_CORE_INFO("SENDING: " + send);
 				m_server.sendToAllClients(send.c_str(), send.length());
 			}
 		}
@@ -392,7 +393,7 @@ namespace mp_server
 		std::string send = processSingleAttackCommand(delim + msg, delim);
 		if (send.length() > 1)
 		{
-			_CORE_INFO("SENDING: " + send);
+			//_CORE_INFO("SENDING: " + send);
 			m_server.sendToAllClients(send.c_str(), send.length());
 		}
 	}
