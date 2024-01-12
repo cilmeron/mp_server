@@ -55,13 +55,25 @@ namespace mp_server
 				{
 					mp_server::processattack(token, lclid, client);
 				}
+				else if (token[0] == 'Z')
+				{
+					mp_server::timeout();
+				}
 				else if (token[0] == 'C')
 				{
 					mp_server::processmove(token, lclid, client, "C");
 				}
+				else if (token[0] == 'I')
+				{
+					mp_server::processhp(token, lclid, client);
+				}
 				else if (token[0] == 'K')
 				{
 					mp_server::processmove(token, lclid, client, "K");
+				}
+				else if (token[0] == 'S')
+				{
+					mp_server::processmove(token, lclid, client, "S");
 				}
 				else if (token[0] == 'Q')
 				{
@@ -84,6 +96,25 @@ namespace mp_server
 		std::string send = "Q:SUCCESS:|";
 		m_server.sendToAllClients(send.c_str(), send.length());		
 		_CORE_INFO("Reset done.");
+	}
+
+
+	void mp_server::timeout()
+	{
+		_CORE_INFO("Timeout condition reached - Calculate winner and send to clients");
+		_CORE_INFO("#################");
+		std::string send;
+		if (m_server.playeroneunits.size() >= m_server.playertwounits.size())
+		{
+			_CORE_INFO("Player {0} won.", m_server.playeronestring);
+			send = "G:" + m_server.playertwostring + ":0:|";
+		}
+		else
+		{
+			_CORE_INFO("Player {0} won.", m_server.playertwostring);
+			send = "G:" + m_server.playeronestring + ":0:|";
+		}
+		m_server.sendToAllClients(send.c_str(), send.length());
 	}
 	
 	std::string mp_server::processSingleMoveCommand(const std::string& command, const std::string& term)
@@ -108,26 +139,63 @@ namespace mp_server
 		}
 
 		// Assuming the components vector has the expected number of elements
-		if (components.size() == 4)
+		if (components.size() >= 4)
 		{
 			std::string playerName = components[1];
 			std::string coordinates = components[2];
 			std::string UnitID = components[3];
+			std::string Type = "A";
+			if (term._Equal("S"))
+			{
+				Type = components[4];
+			}
 			int id = std::stoi(UnitID);
 			std::unordered_map<int, std::string>& temp = (playerName == m_server.playeronestring) ? m_server.playeroneunits : m_server.playertwounits;
+			std::unordered_map<int, std::string>& temp2 = (playerName == m_server.playeronestring) ? m_server.playertwounits : m_server.playeroneunits;
+
+			if (Type._Equal("O"))
+			{
+				auto it = temp2.find(id);
+				if (it != temp2.end())
+				{
+					//found unit in opponent collection 
+				}
+				else
+				{
+					//not found - add to list
+					temp2.insert(std::make_pair(id, coordinates));
+				}
+				return "S:" + playerName + ":" + coordinates + ":" + UnitID + ":" + Type + ":|";
+			}
+			if (Type._Equal("K"))
+			{
+				auto it = temp.find(id);
+				if (it != temp.end())
+				{
+					//found unit in own collection - send new coord
+				}
+				else
+				{
+					//not found add
+					temp.insert(std::make_pair(id, coordinates));
+				}
+				return "S:" + playerName + ":" + coordinates + ":" + UnitID + ":" + Type + ":|";
+			}
+
 			auto it = temp.find(id);
 			if (it != temp.end())
 			{
 				if (term._Equal("K"))
 				{
-					temp.erase(id);
-					if (temp.size() == 0)
-					{
-						//player has no more units - declare game over
-						_CORE_INFO("#################");
-						_CORE_INFO("Player {0} is DEAD", playerName);
-						return "G:" + playerName + ":0:|";
-					}
+					return "";
+				//int id = std::stoi(UnitID);	temp.erase(id);
+//					if (temp.size() == 0)
+	//				{
+		//				//player has no more units - declare game over
+			//			_CORE_INFO("#################");
+				//		_CORE_INFO("Player {0} is DEAD", playerName);
+					//	return "G:" + playerName + ":0:|";
+					//}
 				}
 				else if (term._Equal("M"))
 				{
@@ -153,6 +221,64 @@ namespace mp_server
 				}
 				return term + ":NOTFOUND";
 			}
+		}
+		return "";
+	}
+
+	std::string mp_server::processSingleHPCommand(const std::string& command, const std::string& term)
+	{
+		std::string temp = "";
+		if (!command.empty() && command[0] == term[0] && command.size() > 1 && command[1] != ':')
+		{
+			temp = term + ":" + command;
+		}
+		else
+		{
+			temp = command;
+		}
+
+		std::istringstream commandStream(temp);
+		std::string token;
+
+		std::vector<std::string> components;
+		while (std::getline(commandStream, token, ':'))
+		{
+			components.push_back(token);
+		}
+
+		// Assuming the components vector has the expected number of elements
+		if (components.size() == 5)
+		{
+			std::string playerName = components[1];
+			std::string hp = components[2];
+			std::string current = components[3];
+			std::string UID = components[4];
+			int hpint = std::stoi(hp);
+			int currentint = std::stoi(current);
+			int res = currentint - hpint;
+			if (res < 0)
+				res = 0;
+			if (res == 0)
+			{
+				int id = std::stoi(UID);
+				std::unordered_map<int, std::string>& temp = (playerName == m_server.playeronestring) ? m_server.playeroneunits : m_server.playertwounits;
+				auto it = temp.find(id);
+				if (it != temp.end())
+				{
+					temp.erase(id);
+					if (temp.size() == 0)
+					{
+						//player has no more units - declare game over
+						_CORE_INFO("#################");
+						_CORE_INFO("Player {0} is DEAD", playerName);
+						std::string gameover = "G:" + playerName + ":0:|";
+						m_server.sendToAllClients(gameover.c_str(), gameover.length());
+					}
+					std::string returndeath = "K:" + playerName + ":O:" + UID + ":|";
+					m_server.sendToAllClients(returndeath.c_str(), returndeath.length());
+					}
+			}
+			return term + ":" + playerName + ":" + UID + ":" + std::to_string(res) + ":|";
 		}
 		return "";
 	}
@@ -217,6 +343,32 @@ namespace mp_server
 		
 	}
 
+	void mp_server::processhp(std::string msg, int id, const Client& client)
+	{
+		_CORE_INFO("Processing HP Update");
+		std::istringstream messageStream(msg);
+		size_t pos = 0;
+		const std::string delim = "I";
+		std::string token;
+		while ((pos = msg.find(delim)) != std::string::npos)
+		{
+			token = msg.substr(0, pos);
+			msg.erase(0, pos + delim.length());
+			std::string send = processSingleHPCommand(delim + token, delim);
+			if (send.length() > 1)
+			{
+				_CORE_INFO("SENDING: " + send);
+				m_server.sendToAllClients(send.c_str(), send.length());
+			}
+		}
+
+		std::string send = processSingleHPCommand(delim + msg, delim);
+		if (send.length() > 1)
+		{
+			_CORE_INFO("SENDING: " + send);
+			m_server.sendToAllClients(send.c_str(), send.length());
+		}
+	}
 	void mp_server::processattack(std::string msg, int id, const Client& client)
 	{
 		_CORE_INFO("Processing Attack command");
