@@ -404,6 +404,7 @@ namespace mp_server
 		std::stringstream data(msg);
 		std::string l;
 		int cc = 0;
+		Client* c = m_server.getClient(id);
 		while (std::getline(data, l, ':'))
 		{
 			try
@@ -420,12 +421,14 @@ namespace mp_server
 					if (m_server.playeronestring == l)
 					{
 						m_server.playerone = id;
+						c->setPlayerKind(1);
 						pkinds = "A";
 						reconnect = true;
 					}
 					else if (m_server.playertwostring == l)
 					{
 						m_server.playertwo = id;
+						c->setPlayerKind(2);
 						pkinds = "B";
 						reconnect = true;
 					}
@@ -438,6 +441,7 @@ namespace mp_server
 						_CORE_INFO("Sending playerinfo to reconnected player {0}", pinfo.c_str());
 						m_server.sendToClient(client, reply, strlen(reply));
 						std::this_thread::sleep_for(std::chrono::milliseconds(10));
+						
 						//Now we send unit infos
 						for (const auto& entry : m_server.playeroneunits)
 						{
@@ -453,11 +457,11 @@ namespace mp_server
 							std::string send = "C:" + m_server.playertwostring + ":" + entry.second + ":" + std::to_string(entry.first) + ":|";
 							m_server.sendToClient(client, send.c_str(), send.length());
 						}
+						c->setPlayerName(l);
 						return;
 					}
 					
 					_CORE_INFO("I think the player name is {0}", l);
-					Client* c = m_server.getClient(id);
 					c->setPlayerName(l);
 					_CORE_INFO("We set the client playername to {0}", c->getPlayerName());
 					std::string number = "H:" + l + ":";
