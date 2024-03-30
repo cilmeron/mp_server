@@ -14,6 +14,7 @@ namespace mp_server
 		static void processhello(std::string msg, int id, const Client& client);
 		static void processattack(std::string msg, int id, const Client& client);
 		static void processmove(std::string msg, int id, const Client& client, const std::string& delim);
+		static void anomalydetection(std::string msg);
 		static std::string processSingleMoveCommand(const std::string& command, const std::string& term);
 		static std::string processSingleAttackCommand(const std::string& command, const std::string& term);
 		static std::string processSingleHPCommand(const std::string& command, const std::string& term);

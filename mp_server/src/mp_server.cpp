@@ -4,11 +4,13 @@
 #include <chrono>
 #include <sstream>
 #include <string>
+#include <iostream>
+#include <cstdio>
 #include <unordered_map>
 
 namespace mp_server
 {
-	
+
 
 	std::string createString(const char* data, size_t size)
 	{
@@ -18,9 +20,42 @@ namespace mp_server
 	{
 		_CORE_INFO("Administrator sent some message");
 	}
+	void mp_server::anomalydetection(std::string msg)
+	{
+		// Construct the command to execute the Python script with the input string
+		std::string command = "python predict.py \"" + msg + "\"";
+
+		// Open a pipe to execute the command and capture its output
+		FILE* pipe = _popen(command.c_str(), "r");
+		if (!pipe) 
+		{
+			_CORE_ERROR("Error executing Python script.");
+			return;
+		}
+
+		// Read the output from the pipe
+		char buffer[128];
+		std::string result;
+		while (!feof(pipe)) 
+		{
+			if (fgets(buffer, 128, pipe) != nullptr)
+				result += buffer;
+		}
+
+		// Close the pipe
+		_pclose(pipe);
+
+		// Check if the output contains "ANOMALY DETECTED"
+		if (result.find("ANOMALY DETECTED") != std::string::npos) 
+		{
+			_CORE_WARN("Anomaly Detected.");
+		}
+	}
+
 	void onIncomingClient(const Client& client, const char* msg, size_t size)
 	{		
 		std::string message = createString(msg, size);
+		mp_server::anomalydetection(message);
 		int lclid = client.getId();
 		_CORE_INFO("Client {0} sent some message: {1}", lclid, message);
 		const std::string delimiters = "\n\0";
